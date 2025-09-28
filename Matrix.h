@@ -7,7 +7,6 @@
 
 template<typename T, int N, int M>
 class Matrix {
-    constexpr static int MaxLocalMatrixSize = 1;
     T data[N][M];
 public:
     Matrix operator+(const Matrix& other) const;
