@@ -11,5 +11,4 @@ int main() {
     Game2048 game(rng);
     game.play(rng);
     return 0;
-    return 0;
 }
