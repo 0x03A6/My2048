@@ -11,7 +11,7 @@ add_executable(My2048 main.cpp
         print.h
         utils.cpp
         utils.h
-        Matrix.cpp
         Matrix.h
         Layer.cpp
-        Layer.h)
+        Layer.h
+        Vector.h)

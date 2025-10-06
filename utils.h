@@ -6,9 +6,13 @@
 #define MY2048_UTILS_H
 
 template<typename T>
-T sigmoid(T x);
+T sigmoid(const T x) {
+    return static_cast<T>(1) / (static_cast<T>(1) + exp(-x));
+}
 
 template<typename T>
-T sigmoidDerivative(T x);
+T sigmoidDerivative(T x) {
+    return sigmoid(x) / (static_cast<T>(1) - sigmoid(x));
+}
 
 #endif //MY2048_UTILS_H
