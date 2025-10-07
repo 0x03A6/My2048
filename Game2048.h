@@ -6,7 +6,7 @@
 #define MY2048_GAME2048_H
 #include <random>
 
-enum class Direction : unsigned char { Up, Down, Left, Right };
+enum class Direction : unsigned char { Up, Down, Left, Right, Invalid };
 
 class Game2048 {
     int board[4][4];
@@ -25,6 +25,8 @@ public:
     int update(Direction d, std::mt19937 &rng);
     void print();
     void play(std::mt19937 &rng);
+    int *getBoard();
+    double *getRealBoard();
 };
 
 

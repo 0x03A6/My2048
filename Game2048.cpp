@@ -9,6 +9,7 @@
 #include <filesystem>
 
 #include "print.h"
+#include "utils.h"
 
 bool Game2048::generateRandElem(std::mt19937 &rng) {
     if (space_cnt == 0)
@@ -144,14 +145,8 @@ Game2048::Game2048() {
     memset(board, 0, sizeof(board));
     space_cnt = 16;
     score = 0;
-}
-
-Game2048::Game2048(std::mt19937 &rng) {
-    memset(board, 0, sizeof(board));
-    space_cnt = 16;
-    score = 0;
-    generateRandElem(rng);
-    generateRandElem(rng);
+    generateRandElem(getRng());
+    generateRandElem(getRng());
 }
 
 Game2048::Game2048(const Game2048 &game) {
@@ -241,4 +236,15 @@ void Game2048::play(std::mt19937 &rng) {
             break;
         }
     }
+}
+
+int * Game2048::getBoard() {
+    return (int *)board;
+}
+
+double * Game2048::getRealBoard() {
+    static double ret[16];
+    for (int i = 0; i < 16; i++)
+        ret[i] = ((int *)board)[i];
+    return ret;
 }

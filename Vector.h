@@ -27,6 +27,7 @@ public:
         data = v.data;
         owned = false;
     }
+    explicit Vector(T *ptr) : data(ptr), owned(false) {}
     Vector(Vector &&) noexcept = default;
     Vector(const std::initializer_list<double> src) {
         if (src.size() != Size) {
@@ -124,6 +125,9 @@ public:
             std::cout << data[i] << ' ';
         }
         std::cout << "] ^ T)\n";
+    }
+    T *getData() const {
+        return data;
     }
 
 };

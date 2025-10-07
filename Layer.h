@@ -5,7 +5,7 @@
 #ifndef MY2048_LAYER_H
 #define MY2048_LAYER_H
 
-#include <cmath>
+#include <algorithm>
 #include <random>
 
 #include "utils.h"
@@ -24,6 +24,8 @@ class Layer {
 
     template<int A, int B>
     friend class Layer;
+
+    friend class FNN;
 
     public:
 
@@ -93,6 +95,16 @@ class Layer {
                 grad_input[j] += weights[i][j] * delta[i];
             }
         }
+    }
+    Vector<double, Size> getOutput() {
+        return (Vector<double, Size>){ output };
+    }
+    void setGradOutput(const Vector<double, Size> grad_output_) {
+        grad_output = grad_output_;
+    }
+    void copy(const Layer &other) {
+        weights.copy(other.weights);
+        bias.copy(other.bias);
     }
 };
 

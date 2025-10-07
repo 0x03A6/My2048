@@ -14,4 +14,9 @@ add_executable(My2048 main.cpp
         Matrix.h
         Layer.cpp
         Layer.h
-        Vector.h)
+        Vector.h
+        DQN.cpp
+        DQN.h
+        hyperparams.h
+        ReplayBuffer.cpp
+        ReplayBuffer.h)

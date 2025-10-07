@@ -7,21 +7,28 @@
 
 #include <random>
 
+#include "hyperparams.h"
 #include "Vector.h"
 #include "Layer.h"
+#include "ReplayBuffer.h"
 
 class FNN {
     Vector<double, 16> input;
     Vector<double, 16> grad_input;
+    std::mt19937 rng;
     Layer<16, 256> l1;
     Layer<256, 128> l2;
     Layer<128, 64> l3;
     Layer<64, 4> l4;
-    std::mt19937 rng;
+    double learning_rate = InitLearningRate;
 
 public:
-    FNN(unsigned int seed);
+    explicit FNN();
     Vector<double, 4> forward();
+    void backward(const Vector<double, 4>& grad_output);
+    void copy(const FNN &nn);
+    void setLearningRate(double rate);
+    void setInput(const int *board);
 };
 
 
