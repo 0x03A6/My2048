@@ -5,20 +5,93 @@
 #ifndef MY2048_LAYER_H
 #define MY2048_LAYER_H
 
+#include <cmath>
+#include <random>
+
 #include "utils.h"
 #include "Vector.h"
 
 template<int LastSize, int Size>
 class Layer {
-    Matrix<double, LastSize, Size> weights;
+    Matrix<double, Size, LastSize> weights;
     Vector<double, Size> bias;
+    Vector<double, LastSize> delta;
+    Vector<double, LastSize> input;
     Vector<double, Size> output;
+    Vector<double, LastSize> grad_input;
+    Vector<double, Size> grad_output;
+    static constexpr double InitLimit = std::sqrt(6.0 / (LastSize  + Size));
+
+    template<int A, int B>
+    friend class Layer;
+
     public:
-    Layer() = default;
-    void forward(Vector<double, LastSize> input) {
-        output = weights * input + bias;
+
+    // 防止和链接不同层的语义混淆。
+    Layer(const Layer &) = delete;
+
+    template<int PrevSize>
+    explicit Layer(Layer<PrevSize, LastSize> &from) {
+        weights.alloc();
+        bias.alloc();
+        delta.alloc();
+        output.alloc();
+        grad_output.alloc();
+        input = from.output;
+        grad_input = from.grad_output;
+    }
+
+    template<int PrevSize>
+    Layer(Layer<PrevSize, LastSize> &from, std::mt19937 &rng) : Layer(from) {
+        init(rng);
+    }
+
+    Layer(Vector<double, LastSize> input_, Vector<double, LastSize> grad_input_)
+        : input(input_), grad_input(grad_input_) {
+        weights.alloc();
+        bias.alloc();
+        delta.alloc();
+        output.alloc();
+        grad_output.alloc();
+    }
+
+    Layer(Vector<double, LastSize> input_, Vector<double, LastSize> grad_input_, std::mt19937 &rng) : Layer(input_, grad_input_) {
+        init(rng);
+    }
+
+    void init(std::mt19937 &rng) {
+        std::uniform_real_distribution<double> dis(-InitLimit, InitLimit);
+        for (int i = 0; i < Size; i++) {
+            for (int j = 0; j < LastSize; j++) {
+                weights[i][j] = dis(rng);
+            }
+            bias[i] = dis(rng);
+        }
+
+    }
+    void forward() {
+        output.fromMultiply(weights, input);
+        output += bias;
         for (int i = 0; i < Size; i++) {
             output[i] = sigmoid(output[i]);
+        }
+    }
+    void backward(const double learning_rate) {
+        for (int i = 0; i < Size; i++) {
+            delta[i] = grad_output[i] * output[i] * (1.0 - output[i]);
+        }
+        for (int i = 0; i < Size; i++) {
+            for (int j = 0; j < LastSize; j++) {
+                const double dw_ij = delta[i] * input[j];
+                weights[i][j] -= learning_rate * dw_ij;
+            }
+            bias[i] -= learning_rate * delta[i];
+        }
+        grad_input.clear();
+        for (int j = 0; j < LastSize; j++) {
+            for (int i = 0; i < Size; i++) {
+                grad_input[j] += weights[i][j] * delta[i];
+            }
         }
     }
 };

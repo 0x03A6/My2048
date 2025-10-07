@@ -12,7 +12,8 @@ T sigmoid(const T x) {
 
 template<typename T>
 T sigmoidDerivative(T x) {
-    return sigmoid(x) / (static_cast<T>(1) - sigmoid(x));
+    const T temp = sigmoid(x);
+    return temp / (static_cast<T>(1) - temp);
 }
 
 #endif //MY2048_UTILS_H
