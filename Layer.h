@@ -32,6 +32,14 @@ class Layer {
     // 防止和链接不同层的语义混淆。
     Layer(const Layer &) = delete;
 
+    Layer() {
+        weights.alloc();
+        bias.alloc();
+        delta.alloc();
+        output.alloc();
+        grad_output.alloc();
+    }
+
     template<int PrevSize>
     explicit Layer(Layer<PrevSize, LastSize> &from) {
         weights.alloc();
@@ -71,17 +79,23 @@ class Layer {
         }
 
     }
-    void forward() {
+    void forward(const bool is_output_layer) {
         output.fromMultiply(weights, input);
         output += bias;
+        if (is_output_layer)
+            return;
         for (int i = 0; i < Size; i++) {
             output[i] = sigmoid(output[i]);
         }
     }
-    void backward(const double learning_rate) {
-        for (int i = 0; i < Size; i++) {
-            delta[i] = grad_output[i] * output[i] * (1.0 - output[i]);
-        }
+    void backward(const double learning_rate, bool is_output_layer) {
+        if (is_output_layer)
+            for (int i = 0; i < Size; i++)
+                delta[i] = grad_output[i];
+        else
+            for (int i = 0; i < Size; i++) {
+                delta[i] = grad_output[i] * output[i] * (1.0 - output[i]);
+            }
         for (int i = 0; i < Size; i++) {
             for (int j = 0; j < LastSize; j++) {
                 const double dw_ij = delta[i] * input[j];

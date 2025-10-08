@@ -9,9 +9,8 @@
 
 int main() {
 
-    Game2048 game;
-    game.play(getRng());
-
     DQN dqn;
+    dqn.train();
+
     return 0;
 }

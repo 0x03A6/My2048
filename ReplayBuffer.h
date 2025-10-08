@@ -16,10 +16,11 @@ struct TrainingData {
 
 template<int N>
 class ReplayBuffer {
-    TrainingData buf[N];
+    TrainingData *buf;
     int curs;
 public:
     ReplayBuffer() {
+        buf = new TrainingData[N];
         for (int i = 0; i < N; i++) {
             buf[i].action = Direction::Invalid;
         }
@@ -34,7 +35,14 @@ public:
             buf[0] = data;
         }
     }
-    TrainingData &pick(std::mt19937 &rng) {
+    [[nodiscard]] TrainingData &back() const {
+        return buf[curs];
+    }
+
+    void addEmptyElem() {
+        curs++;
+    }
+    TrainingData &pick(std::mt19937 &rng) const {
         std::uniform_int_distribution<> dis(0, N - 1);
         return buf[dis(rng)];
     }

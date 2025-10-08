@@ -8,6 +8,12 @@
 
 enum class Direction : unsigned char { Up, Down, Left, Right, Invalid };
 
+struct ActionEffect {
+    int delta_score;
+    bool didnt_change;
+    bool game_over;
+};
+
 class Game2048 {
     int board[4][4];
     int space_cnt;
@@ -22,11 +28,13 @@ public:
     Game2048();
     Game2048(std::mt19937 &rng);
     Game2048(const Game2048&);
-    int update(Direction d, std::mt19937 &rng);
+    ActionEffect update(Direction d, std::mt19937 &rng);
     void print();
     void play(std::mt19937 &rng);
-    int *getBoard();
-    double *getRealBoard();
+    const int *getBoard() const;
+    double *getRealBoard() const;
+    int getScore() const;
+    void reset(std::mt19937 &rng);
 };
 
 

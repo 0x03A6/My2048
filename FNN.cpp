@@ -5,25 +5,28 @@
 #include "FNN.h"
 #include "utils.h"
 
-FNN::FNN()  : rng(getRng()), l1(input, grad_input, rng), l2(l1, rng), l3(l2, rng), l4(l3, rng) {
+FNN::FNN()  : rng(getRng()), l1(), l2(l1, rng), l3(l2, rng), l4(l3, rng) {
     input.alloc();
     grad_input.alloc();
+    l1.grad_input = grad_input;
+    l1.input = input;
+    l1.init(rng);
 }
 
 Vector<double, 4> FNN::forward() {
-    l1.forward();
-    l2.forward();
-    l3.forward();
-    l4.forward();
+    l1.forward(false);
+    l2.forward(false);
+    l3.forward(false);
+    l4.forward(true);
     return l4.getOutput();
 }
 
 void FNN::backward(const Vector<double, 4>& grad_output) {
     l4.setGradOutput(grad_output);
-    l4.backward(learning_rate);
-    l3.backward(learning_rate);
-    l2.backward(learning_rate);
-    l1.backward(learning_rate);
+    l4.backward(learning_rate, true);
+    l3.backward(learning_rate, false);
+    l2.backward(learning_rate, false);
+    l1.backward(learning_rate, false);
 }
 
 void FNN::copy(const FNN &nn) {
@@ -40,6 +43,6 @@ void FNN::setLearningRate(const double rate) {
 
 void FNN::setInput(const int *board) {
     for (int i = 0; i < 16; i++) {
-        l1.input[i] = board[i];
+        input[i] = board[i];
     }
 }

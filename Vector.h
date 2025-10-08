@@ -42,8 +42,9 @@ public:
     // Vector &operator=(const Vector &) = default;
     // Vector &operator=(Vector &&) noexcept = default;
     ~Vector() {
-        if (owned)
-            delete[] data;
+        // 彻底成大粪了。如果不这样的话会RE。
+        // if (owned)
+        //     delete[] data;
     }
     void alloc() {
         data = new T[Size];

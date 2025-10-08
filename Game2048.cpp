@@ -155,7 +155,7 @@ Game2048::Game2048(const Game2048 &game) {
     score = game.score;
 }
 
-int Game2048::update(const Direction d, std::mt19937 &rng) {
+ActionEffect Game2048::update(const Direction d, std::mt19937 &rng) {
     bool moved = false;
     int delta_score;
     int sum_delta_score = 0;
@@ -189,9 +189,12 @@ int Game2048::update(const Direction d, std::mt19937 &rng) {
 #undef UPDATE_LINE_HELPER
 #undef UPDATE_COLUMN_HELPER
     score += sum_delta_score;
-    if (moved)
-        generateRandElem(rng);
-    return sum_delta_score;
+    if (!moved)
+        return { 0, true, false };
+    generateRandElem(rng);
+    if (space_cnt == 0 && !judgeFullBoardAlive())
+        return { sum_delta_score, false, true};
+    return { sum_delta_score, false, false};
 }
 
 void Game2048::print() {
@@ -211,40 +214,54 @@ void Game2048::play(std::mt19937 &rng) {
     fflush(stdout);
     while (true) {
         int c = getchar();
-        int reward;
+        ActionEffect effect;
         switch (c) {
             case 'w':
-                reward = update(Direction::Up, rng);
+                effect = update(Direction::Up, rng);
                 break;
             case 'a':
-                reward = update(Direction::Left, rng);
+                effect = update(Direction::Left, rng);
                 break;
             case 's':
-                reward = update(Direction::Down, rng);
+                effect = update(Direction::Down, rng);
                 break;
             case 'd':
-                reward = update(Direction::Right, rng);
+                effect = update(Direction::Right, rng);
                 break;
             default:
                 continue;
         }
         print();
-        std::cout << "Reward: " << reward << "\nScore: " << score << '\n';
+        std::cout << "Reward: " << effect.delta_score << "\nScore: " << score << '\n';
+        if (effect.didnt_change)
+            std::cout << "Didn't change.\n";
         fflush(stdout);
-        if (space_cnt == 0 && !judgeFullBoardAlive()) {
+        if (effect.game_over) {
             std::cout << "Game Over.\n";
             break;
         }
     }
 }
 
-int * Game2048::getBoard() {
-    return (int *)board;
+const int * Game2048::getBoard() const {
+    return &board[0][0];
 }
 
-double * Game2048::getRealBoard() {
+double * Game2048::getRealBoard() const {
     static double ret[16];
     for (int i = 0; i < 16; i++)
         ret[i] = ((int *)board)[i];
     return ret;
+}
+
+int Game2048::getScore() const {
+    return score;
+}
+
+void Game2048::reset(std::mt19937 &rng) {
+    score = 0;
+    memset(board, 0, sizeof(board));
+    space_cnt = 16;
+    generateRandElem(getRng());
+    generateRandElem(getRng());
 }
