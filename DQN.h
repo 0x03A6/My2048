@@ -18,8 +18,8 @@ class DQN {
 public:
     void learn(const TrainingData &data);
     void setLR();
-    void train();
-
+    void train(int max_step);
+    void evaluate();
 };
 
 

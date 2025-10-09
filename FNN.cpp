@@ -5,28 +5,35 @@
 #include "FNN.h"
 #include "utils.h"
 
-FNN::FNN()  : rng(getRng()), l1(), l2(l1, rng), l3(l2, rng), l4(l3, rng) {
+FNN::FNN()  : l1(), l2(l1), l3(l2), l4(l3) {
     input.alloc();
     grad_input.alloc();
     l1.grad_input = grad_input;
     l1.input = input;
-    l1.init(rng);
+    l1.setActivation(Activation::Sigmoid);
+    l2.setActivation(Activation::ReLU);
+    l3.setActivation(Activation::ReLU);
+    l4.setActivation(Activation::Linear);
+    l1.init(getRng());
+    l2.init(getRng());
+    l3.init(getRng());
+    l4.init(getRng());
 }
 
 Vector<double, 4> FNN::forward() {
-    l1.forward(false);
-    l2.forward(false);
-    l3.forward(false);
-    l4.forward(true);
+    l1.forward();
+    l2.forward();
+    l3.forward();
+    l4.forward();
     return l4.getOutput();
 }
 
 void FNN::backward(const Vector<double, 4>& grad_output) {
     l4.setGradOutput(grad_output);
-    l4.backward(learning_rate, true);
-    l3.backward(learning_rate, false);
-    l2.backward(learning_rate, false);
-    l1.backward(learning_rate, false);
+    l4.backward(learning_rate);
+    l3.backward(learning_rate);
+    l2.backward(learning_rate);
+    l1.backward(learning_rate);
 }
 
 void FNN::copy(const FNN &nn) {

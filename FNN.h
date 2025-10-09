@@ -15,11 +15,10 @@
 class FNN {
     Vector<double, 16> input;
     Vector<double, 16> grad_input;
-    std::mt19937 rng;
-    Layer<16, 64> l1;
-    Layer<64, 32> l2;
-    Layer<32, 16> l3;
-    Layer<16, 4> l4;
+    Layer<16, 128> l1;
+    Layer<128, 64> l2;
+    Layer<64, 32> l3;
+    Layer<32, 4> l4;
     double learning_rate = InitLearningRate;
 
 public:

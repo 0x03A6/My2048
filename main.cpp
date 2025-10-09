@@ -10,7 +10,11 @@
 int main() {
 
     DQN dqn;
-    dqn.train();
 
+    for (int i = MaxStep; i < 100 * MaxStep; i += MaxStep) {
+        dqn.train(i);
+        dqn.evaluate();
+        getchar();
+    }
     return 0;
 }

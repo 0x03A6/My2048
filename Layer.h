@@ -11,16 +11,20 @@
 #include "utils.h"
 #include "Vector.h"
 
+enum class Activation { Sigmoid, ReLU, Linear };
+
 template<int LastSize, int Size>
 class Layer {
     Matrix<double, Size, LastSize> weights;
     Vector<double, Size> bias;
-    Vector<double, LastSize> delta;
+    Vector<double, Size> delta;
     Vector<double, LastSize> input;
     Vector<double, Size> output;
     Vector<double, LastSize> grad_input;
     Vector<double, Size> grad_output;
-    static constexpr double InitLimit = std::sqrt(6.0 / (LastSize  + Size));
+    static constexpr double InitLimitSigmoid = std::sqrt(6.0 / (LastSize  + Size));
+    static constexpr double InitLimitReLU = std::sqrt(6.0 / LastSize);
+    Activation activation = Activation::Sigmoid;
 
     template<int A, int B>
     friend class Layer;
@@ -70,32 +74,54 @@ class Layer {
     }
 
     void init(std::mt19937 &rng) {
-        std::uniform_real_distribution<double> dis(-InitLimit, InitLimit);
+        std::uniform_real_distribution<double> dis(
+            activation == Activation::Sigmoid ? -InitLimitSigmoid : -InitLimitReLU,
+            activation == Activation::Sigmoid ? InitLimitSigmoid : InitLimitReLU);
         for (int i = 0; i < Size; i++) {
             for (int j = 0; j < LastSize; j++) {
                 weights[i][j] = dis(rng);
             }
             bias[i] = dis(rng);
         }
-
     }
-    void forward(const bool is_output_layer) {
+    void forward() {
         output.fromMultiply(weights, input);
         output += bias;
-        if (is_output_layer)
-            return;
-        for (int i = 0; i < Size; i++) {
-            output[i] = sigmoid(output[i]);
+        switch (activation) {
+            case Activation::Sigmoid:
+                for (int i = 0; i < Size; i++) {
+                    output[i] = sigmoid(output[i]);
+                }
+                break;
+            case Activation::ReLU:
+                for (int i = 0; i < Size; i++) {
+                    output[i] = ReLU(output[i]);
+                }
+                break;
+            // case Activation::Linear:
+            //     for (int i = 0; i < Size; i++) {
+            //         output[i] = linear(output[i]);
+            //     }
         }
     }
-    void backward(const double learning_rate, bool is_output_layer) {
-        if (is_output_layer)
-            for (int i = 0; i < Size; i++)
-                delta[i] = grad_output[i];
-        else
-            for (int i = 0; i < Size; i++) {
-                delta[i] = grad_output[i] * output[i] * (1.0 - output[i]);
-            }
+    void backward(const double learning_rate) {
+        switch (activation) {
+            case Activation::Sigmoid:
+                for (int i = 0; i < Size; i++) {
+                    delta[i] = grad_output[i] * output[i] * (1.0 - output[i]);
+                }
+                break;
+            case Activation::ReLU:
+                for (int i = 0; i < Size; i++) {
+                    delta[i] = grad_output[i] * (output[i] > 0.0 ? 1.0 : 0.0);
+                }
+                break;
+            case Activation::Linear:
+                memcpy(delta.getData(), grad_output.getData(), Size * sizeof(double));
+                // for (int i = 0; i < Size; i++) {
+                //     delta[i] = grad_output[i];
+                // }
+        }
         for (int i = 0; i < Size; i++) {
             for (int j = 0; j < LastSize; j++) {
                 const double dw_ij = delta[i] * input[j];
@@ -119,6 +145,9 @@ class Layer {
     void copy(const Layer &other) {
         weights.copy(other.weights);
         bias.copy(other.bias);
+    }
+    void setActivation(const Activation activation_) {
+        activation = activation_;
     }
 };
 

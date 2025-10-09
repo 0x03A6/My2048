@@ -12,9 +12,9 @@ void DQN::learn(const TrainingData &data) {
         return;
     std::cout << "Learned.\n";
     policy_network.setInput((int *)data.board);
-    auto res_policy = policy_network.forward();
+    const auto res_policy = policy_network.forward();
     target_network.setInput((int *)data.nxt_board);
-    auto res_target = target_network.forward();
+    const auto res_target = target_network.forward();
     const double Q = data.reward + Gamma * std::max({ res_target[0], res_target[1], res_target[2], res_target[3] });
     static double t[4];
     static Vector<double, 4> grad(t);
@@ -32,8 +32,9 @@ void DQN::setLR() {
         policy_network.setLearningRate(InitLearningRate * 0.01);
 }
 
-void DQN::train() {
-    for (; step < MaxStep; step++) {
+void DQN::train(const int max_step) {
+    game.reset(getRng());
+    for (; step < max_step; step++) {
         setLR();
         if (step % TrainingFreq == 0) {
             for (int i = 0; i < TrainingBatchSize; i++) {
@@ -64,14 +65,14 @@ void DQN::train() {
         replay_buffer.back().action = static_cast<Direction>(decision);
         memcpy(replay_buffer.back().board, game.getBoard(), 16 * sizeof(int));
 
-        const auto effect = game.update(static_cast<Direction>(decision), getRng());
+        const auto [delta_score, didnt_change, game_over] = game.update(static_cast<Direction>(decision), getRng());
 
         memcpy(replay_buffer.back().nxt_board, game.getBoard(), 16 * sizeof(int));
 
-        replay_buffer.back().reward = effect.delta_score;
-        if (effect.game_over)
+        replay_buffer.back().reward = delta_score;
+        if (game_over)
             replay_buffer.back().reward += GameOverReward;
-        if (effect.didnt_change)
+        if (didnt_change)
             replay_buffer.back().reward += DidntChangeReward;
 
         std::cout << "Reward: " << replay_buffer.back().reward << std::endl;
@@ -79,10 +80,39 @@ void DQN::train() {
         game.print();
         std::cout << "Finished Step: " << step << "\nScore: " << game.getScore() << "\n\n";
 
-        if (effect.game_over)
+        if (game_over || didnt_change)
             game.reset(getRng());
 
-        if (step % NetworkUpdateFreq == 0)
+        if (step % NetworkUpdateFreq == 0) {
             target_network.copy(policy_network);
+            std::cout << "Network updated.\n";
+        }
     }
+}
+
+void DQN::evaluate() {
+    std::cout << "Evaluation.\n";
+    int s = 0;
+    for (int i = 0; i < 5; i++) {
+        game.reset(getRng());
+        ActionEffect effect;
+        while (true) {
+            policy_network.setInput(game.getBoard());
+            const auto res_policy = policy_network.forward();
+            const int action = std::max_element(res_policy.getData(), res_policy.getData() + 4) - res_policy.getData();
+            std::cout << "UDLR"[action];
+            effect = game.update(static_cast<Direction>(action), getRng());
+            if (effect.game_over) {
+                std::cout << "\nGame over.\n";
+                break;
+            }
+            if (effect.didnt_change) {
+                std::cout << "\nDidnt change.\n";
+                break;
+            }
+        }
+        std::cout << "\nScore: " << game.getScore() << std::endl;
+        s += game.getScore();
+    }
+    std::cout << "Average Score: " << s / 5.0 << std::endl;
 }

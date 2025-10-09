@@ -40,7 +40,10 @@ public:
     }
 
     void addEmptyElem() {
-        curs++;
+        if (curs <= N)
+            curs++;
+        else
+            curs = 0;
     }
     TrainingData &pick(std::mt19937 &rng) const {
         std::uniform_int_distribution<> dis(0, N - 1);
